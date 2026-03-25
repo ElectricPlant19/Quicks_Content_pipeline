@@ -4,7 +4,7 @@
   "description": "AI-powered pipeline that turns any article URL into scored, deduped Quicks cards",
   "main": "pipeline.js",
   "scripts": {
-    "start": "node pipeline.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
