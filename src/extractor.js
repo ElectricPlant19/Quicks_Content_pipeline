@@ -1,4 +1,4 @@
-const { callClaude, parseJSON } = require("./claude");
+const { callLLM, parseJSON } = require("./llm");
 
 const SYSTEM = `You are an expert at extracting the most intellectually striking insights from articles and long-form text.
 
@@ -35,7 +35,7 @@ ${text}
 
 Extract the 5–10 best insights. Return JSON only.`;
 
-  const raw = await callClaude(SYSTEM, userPrompt, 2000);
+  const raw = await callLLM(SYSTEM, userPrompt, 2000);
   const parsed = parseJSON(raw);
 
   // Filter to only high/medium strength insights

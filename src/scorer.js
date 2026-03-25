@@ -1,4 +1,4 @@
-const { callClaude, parseJSON } = require("./claude");
+const { callLLM, parseJSON } = require("./llm");
 
 const SYSTEM = `You are a content quality judge for Quicks — a mobile feed app competing with doomscrolling.
 
@@ -49,7 +49,7 @@ Category: ${c.category}`
 
   const userPrompt = `Score these ${cards.length} Quicks cards. Return JSON array only.\n\n${cardList}`;
 
-  const raw = await callClaude(SYSTEM, userPrompt, 2000);
+  const raw = await callLLM(SYSTEM, userPrompt, 2000);
   const scores = parseJSON(raw);
 
   // Merge scores back into cards

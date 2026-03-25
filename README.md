@@ -13,7 +13,7 @@ URL → Fetch & Clean → Extract Insights → Transform to Cards → Score → 
 | Stage | File | What it does |
 |---|---|---|
 | 1. Fetch | `src/fetcher.js` | Downloads URL, strips boilerplate, extracts clean text |
-| 2. Extract | `src/extractor.js` | Finds 5–10 best insights via Claude API |
+| 2. Extract | `src/extractor.js` | Finds 5–10 best insights via Groq API (Llama 3.3 70B) |
 | 3. Transform | `src/transformer.js` | Formats each insight into Hook / Insight / Twist / Category / Tags |
 | 4. Score | `src/scorer.js` | Rates each card on 5 dimensions, sets verdict: `publish / review / reject` |
 | 5. Dedup | `src/deduplicator.js` | Removes duplicates via Jaccard similarity + semantic AI check |
@@ -29,7 +29,7 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY (and optionally MONGODB_URI)
+# Edit .env and add your GROK_API_KEY (and optionally MONGODB_URI)
 ```
 
 ---
@@ -153,7 +153,7 @@ status    — approved | pending_review | rejected
 Two-pass dedup runs on every batch:
 
 1. **Local (Jaccard)** — Fast token-overlap check. Flags pairs with > 40% overlap.
-2. **Semantic (AI)** — Claude checks for same-idea cards worded differently, comparing against all previously generated hooks.
+2. **Semantic (AI)** — LLM checks for same-idea cards worded differently, comparing against all previously generated hooks.
 
 Previously run outputs are automatically loaded from `./output/` so cross-run duplicates are caught too.
 

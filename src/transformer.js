@@ -1,4 +1,4 @@
-const { callClaude, parseJSON } = require("./claude");
+const { callLLM, parseJSON } = require("./llm");
 // No external uuid package needed as we use native crypto below
 
 
@@ -41,7 +41,7 @@ ${insightList}
 
 Transform each into a Quicks card. Return a JSON array of card objects.`;
 
-  const raw = await callClaude(SYSTEM, userPrompt, 3000);
+  const raw = await callLLM(SYSTEM, userPrompt, 3000);
   const cards = parseJSON(raw);
 
   // Attach metadata
