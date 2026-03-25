@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quicks | AI Content Pipeline</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    
+    <main class="container">
+        <header>
+            <div class="logo">QUICKS</div>
+            <h1>Turn Articles into <span>Insights.</span></h1>
+            <p class="subtitle">AI-powered pipeline that distills long-form content into high-impact cards.</p>
+        </header>
+
+        <section class="input-section glass">
+            <form id="pipeline-form">
+                <div class="input-group">
+                    <input type="url" id="url-input" placeholder="Paste an article URL here..." required>
+                    <button type="submit" id="submit-btn">
+                        <span class="btn-text">Generate Cards</span>
+                        <div class="spinner hidden"></div>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section id="status-area" class="hidden">
+            <div class="status-msg">
+                <span id="status-text">Processing URL...</span>
+            </div>
+        </section>
+
+        <section id="results-area" class="results-grid">
+            <!-- Cards will be injected here -->
+        </section>
+    </main>
+
+    <template id="card-template">
+        <div class="insight-card glass">
+            <div class="card-header">
+                <span class="category"></span>
+                <span class="score"></span>
+            </div>
+            <h3 class="hook"></h3>
+            <p class="insight"></p>
+            <div class="twist-container hidden">
+                <div class="twist-label">THE TWIST</div>
+                <p class="twist"></p>
+            </div>
+            <div class="card-footer">
+                <div class="tags"></div>
+                <button class="copy-btn" title="Copy to Clipboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 17.7222V19.5C8 20.3284 8.67157 21 9.5 21H19.5C20.3284 21 21 20.3284 21 19.5V9.5C21 8.67157 20.3284 8 19.5 8H17.7222M9.5 16H4.5C3.67157 16 3 15.3284 3 14.5V4.5C3 3.67157 3.67157 3 4.5 3H14.5C15.3284 3 16 3.67157 16 4.5V9.5C16 10.3284 15.3284 11 14.5 11H9.5C8.67157 11 8 10.3284 8 9.5V4.5"></path></svg>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>

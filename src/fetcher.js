@@ -1,0 +1,67 @@
+const axios = require("axios");
+const cheerio = require("cheerio");
+
+/**
+ * Fetches a URL and extracts clean readable text from it.
+ * Strips nav, footer, ads, scripts, and boilerplate.
+ */
+async function fetchAndClean(url) {
+  const res = await axios.get(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; QuicksPipeline/1.0; +https://quicks.app)",
+    },
+    timeout: 15000,
+  });
+
+  const $ = cheerio.load(res.data);
+
+  // Remove noise elements
+  $(
+    "script, style, nav, footer, header, aside, .ad, .ads, .advertisement, .cookie, .popup, .modal, iframe, form"
+  ).remove();
+
+  // Try to find the main content block
+  const candidates = [
+    "article",
+    "main",
+    '[role="main"]',
+    ".post-content",
+    ".entry-content",
+    ".article-body",
+    ".content",
+    "#content",
+    "body",
+  ];
+
+  let text = "";
+  for (const selector of candidates) {
+    const el = $(selector).first();
+    if (el.length && el.text().trim().length > 300) {
+      text = el.text();
+      break;
+    }
+  }
+
+  // Normalize whitespace
+  text = text
+    .replace(/\t/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/ {2,}/g, " ")
+    .trim();
+
+  const title = $("title").first().text().trim() || url;
+
+  if (text.length < 200) {
+    throw new Error(
+      `Could not extract meaningful content from URL: ${url} (got ${text.length} chars)`
+    );
+  }
+
+  // Truncate to ~8000 chars to stay within token limits
+  const truncated = text.length > 8000 ? text.slice(0, 8000) + "…" : text;
+
+  return { url, title, text: truncated, charCount: text.length };
+}
+
+module.exports = { fetchAndClean };
