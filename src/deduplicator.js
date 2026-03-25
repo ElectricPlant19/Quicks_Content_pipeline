@@ -1,4 +1,4 @@
-const { callClaude, parseJSON } = require("./claude");
+const { callLLM, parseJSON } = require("./llm");
 
 /**
  * Simple token-based similarity using Jaccard index.
@@ -82,7 +82,7 @@ EXISTING hooks in library (sample):
 ${existingHooks.slice(0, 50).map((h, i) => `${i}. ${h}`).join("\n")}`;
 
   try {
-    const raw = await callClaude(SYSTEM, userPrompt, 500);
+    const raw = await callLLM(SYSTEM, userPrompt, 500);
     const dupIndices = new Set(parseJSON(raw));
 
     let semanticDupCount = 0;

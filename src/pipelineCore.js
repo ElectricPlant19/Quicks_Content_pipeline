@@ -12,41 +12,62 @@ async function runPipeline(url, options = {}) {
     existingHooks = [] 
   } = options;
 
-  console.log(`\n🔗 Processing: ${url}`);
+  const startTime = Date.now();
 
-  // Stage 1: Fetch
-  const { text, title } = await fetchAndClean(url);
-  console.log(`  ✓ Fetched: ${title}`);
+  try {
+    console.log(`\n🔗 Processing: ${url}`);
 
-  // Stage 2: Extract
-  const extracted = await extractInsights(text, title, url);
+    // Stage 1: Fetch
+    const { text, title } = await fetchAndClean(url);
+    console.log(`  ✓ Fetched: ${title}`);
 
-  // Stage 3: Transform
-  const cards = await transformToCards(extracted);
+    // Stage 2: Extract
+    const extracted = await extractInsights(text, title, url);
 
-  // Stage 4: Score
-  const scored = await scoreCards(cards);
+    // Stage 3: Transform
+    const cards = await transformToCards(extracted);
 
-  // Bonus: Dedup
-  const { unique, duplicates } = await deduplicateCards(scored, existingHooks);
+    // Stage 4: Score
+    const scored = await scoreCards(cards);
 
-  // Status updates for return
-  const results = {
-    title,
-    url,
-    cards: unique,
-    duplicateCount: duplicates.length,
-    timestamp: new Date().toISOString()
-  };
+    // Bonus: Dedup
+    const { unique, duplicates } = await deduplicateCards(scored, existingHooks);
 
-  if (!dryRun) {
-    writeOutputs(unique, {
-      urls: [url],
-      durationMs: 0,
-    }, outputDir);
+    const durationMs = Date.now() - startTime;
+
+    // Status updates for return
+    const results = {
+      title,
+      url,
+      cards: unique,
+      duplicateCount: duplicates.length,
+      durationMs,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (!dryRun) {
+      try {
+        await writeOutputs(unique, {
+          urls: [url],
+          durationMs,
+        }, outputDir);
+      } catch (persistErr) {
+        console.error(`  ⚠ Persistence error for ${url}: ${persistErr.message}`);
+        results.persistenceError = true;
+      }
+    }
+
+    return results;
+  } catch (err) {
+    const durationMs = Date.now() - startTime;
+    console.error(`  ❌ Pipeline failed for ${url}: ${err.message}`);
+    return {
+      url,
+      error: err.message,
+      durationMs,
+      timestamp: new Date().toISOString(),
+    };
   }
-
-  return results;
 }
 
 module.exports = { runPipeline };

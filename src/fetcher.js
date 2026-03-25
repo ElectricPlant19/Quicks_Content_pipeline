@@ -58,8 +58,26 @@ async function fetchAndClean(url) {
     );
   }
 
-  // Truncate to ~8000 chars to stay within token limits
-  const truncated = text.length > 8000 ? text.slice(0, 8000) + "…" : text;
+  // Truncate to ~12000 chars (Llama 3.3 70B supports 128k context, so there's room)
+  const CONTENT_LIMIT = 12000;
+  let truncated = text;
+  if (text.length > CONTENT_LIMIT) {
+    // Try to truncate at a sentence or paragraph boundary
+    let cutoff = text.lastIndexOf(".", CONTENT_LIMIT);
+    if (cutoff < CONTENT_LIMIT * 0.8) {
+      // If no good sentence boundary found, try paragraph
+      cutoff = text.lastIndexOf("\n", CONTENT_LIMIT);
+    }
+    if (cutoff < CONTENT_LIMIT * 0.8) {
+      // Fall back to space boundary to avoid mid-word cuts
+      cutoff = text.lastIndexOf(" ", CONTENT_LIMIT);
+    }
+    if (cutoff < CONTENT_LIMIT * 0.8) {
+      cutoff = CONTENT_LIMIT;
+    }
+    truncated = text.slice(0, cutoff + 1) +
+      `\n\n[Content truncated at ${cutoff + 1} characters. Original length: ${text.length}]`;
+  }
 
   return { url, title, text: truncated, charCount: text.length };
 }

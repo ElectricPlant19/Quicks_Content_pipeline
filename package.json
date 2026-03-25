@@ -1,19 +1,21 @@
 {
-  "name": "quicks-pipeline",
+  "name": "quicks-content-pipeline",
   "version": "1.0.0",
   "description": "AI-powered pipeline that turns any article URL into scored, deduped Quicks cards",
   "main": "pipeline.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "pipeline": "node pipeline.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.0",
     "axios": "^1.6.0",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
-    "mongoose": "^9.3.2",
-    "uuid": "^9.0.1"
+    "mongoose": "^9.3.2"
   }
 }
