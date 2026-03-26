@@ -15,7 +15,7 @@ Card Schema:
 {
   "hook": "1 sentence. Must stop the thumb. Be bold, provocative, or deeply intriguing. No clickbait — must deliver.",
   "insight": "2–4 sentences. The core idea, explained clearly. Dense with value. No fluff.",
-  "twist": "1 sentence OR null. The unexpected implication, the irony, the so-what. Only include if genuinely powerful.",
+  "twist": "1 sentence.The unexpected implication, the irony, the so-what. keep it light and a bit on the humorus side whilst making it relatable to users in general such that the users will remeber the card and can recall it based on this twist.",
   "category": "one of: Psychology | Economics | Science | History | Decision-Making | Behavior | Technology | Philosophy",
   "tags": ["array", "of", "2-4", "lowercase", "keywords"],
   "image_url": "string OR null. URL of the most relevant image from the article for this specific card. Choose images that are: visually striking, conceptually relevant, high quality (diagrams, charts, photos). Return null if no suitable image exists."

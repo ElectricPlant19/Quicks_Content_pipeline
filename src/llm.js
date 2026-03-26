@@ -36,7 +36,15 @@ async function callLLM(system, prompt, maxTokens = 1000) {
   await acquireSemaphore();
 
   try {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const apiKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing GROQ_API_KEY (or legacy GROK_API_KEY).");
+    }
+
+    const requestTimeoutMs = Number(process.env.LLM_REQUEST_TIMEOUT_MS || 30000);
+    const maxRetries = Number(process.env.LLM_MAX_RETRIES || MAX_RETRIES);
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const response = await axios.post("https://api.groq.com/openai/v1/chat/completions", {
           model: "llama-3.3-70b-versatile",
@@ -48,10 +56,10 @@ async function callLLM(system, prompt, maxTokens = 1000) {
           temperature: 0.1,
         }, {
           headers: {
-            "Authorization": `Bearer ${process.env.GROK_API_KEY}`,
+            "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
-          timeout: 30000,
+          timeout: requestTimeoutMs,
         });
 
         return response.data.choices[0].message.content;
@@ -59,7 +67,7 @@ async function callLLM(system, prompt, maxTokens = 1000) {
         const status = err.response?.status;
         const isRetryable = status === 429 || status >= 500;
 
-        if (!isRetryable || attempt === MAX_RETRIES) {
+        if (!isRetryable || attempt === maxRetries) {
           if (err.response) {
             console.error(`  ❌ Groq API Details:`, JSON.stringify(err.response.data, null, 2));
           }
@@ -77,7 +85,7 @@ async function callLLM(system, prompt, maxTokens = 1000) {
           }
         }
 
-        console.warn(`  ⚠ Groq API attempt ${attempt}/${MAX_RETRIES} failed (HTTP ${status}), retrying in ${delayMs}ms...`);
+        console.warn(`  ⚠ Groq API attempt ${attempt}/${maxRetries} failed (HTTP ${status}), retrying in ${delayMs}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }

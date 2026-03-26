@@ -105,11 +105,21 @@ app.post("/api/process", async (req, res) => {
     // Load existing hooks for deduplication
     const existingHooks = loadExistingHooks(path.join(__dirname, "output"));
     
-    // Run the pipeline
-    const results = await runPipeline(url, { 
-      outputDir: path.join(__dirname, "output"),
-      existingHooks 
-    });
+    const pipelineTimeoutMs = Number(process.env.PIPELINE_TIMEOUT_MS || 90000);
+
+    // Run the pipeline with a hard timeout so the UI doesn't buffer forever.
+    const results = await Promise.race([
+      runPipeline(url, {
+        outputDir: path.join(__dirname, "output"),
+        existingHooks,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Pipeline timed out after ${pipelineTimeoutMs}ms`)),
+          pipelineTimeoutMs
+        )
+      ),
+    ]);
 
     if (results.error) {
       return res.status(500).json(results);
@@ -118,7 +128,17 @@ app.post("/api/process", async (req, res) => {
     res.json(results);
   } catch (err) {
     console.error(`❌ Pipeline Error: ${err.message}`);
-    res.status(err.message.includes("Malformed") || err.message.includes("protocol") || err.message.includes("private") || err.message.includes("blocked") ? 400 : 500).json({ error: err.message });
+    const isBadRequest =
+      err.message.includes("Malformed") ||
+      err.message.includes("protocol") ||
+      err.message.includes("private") ||
+      err.message.includes("blocked");
+
+    const isTimeout = err.message.includes("timed out");
+
+    res
+      .status(isBadRequest ? 400 : isTimeout ? 504 : 500)
+      .json({ error: err.message });
   }
 });
 

@@ -48,8 +48,8 @@ for (let i = 0; i < args.length; i++) {
 const OUTPUT_DIR = flags.output || "./output";
 
 async function run() {
-  if (!process.env.GROK_API_KEY) {
-    console.error("❌ GROK_API_KEY is not set in .env");
+  if (!process.env.GROQ_API_KEY && !process.env.GROK_API_KEY) {
+    console.error("❌ GROQ_API_KEY is not set in .env (or legacy GROK_API_KEY)");
     process.exit(1);
   }
 
@@ -118,4 +118,4 @@ async function run() {
 run().catch((err) => {
   console.error(`❌ Fatal error: ${err.message}`);
   process.exit(1);
-});
+});

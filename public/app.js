@@ -20,11 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
         btnText.classList.add('hidden');
 
         try {
+            const controller = new AbortController();
+            const timeoutMs = 90000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
             const response = await fetch('/api/process', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ url }),
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -34,6 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderCards(data.cards);
         } catch (err) {
+            if (err.name === 'AbortError') {
+                alert('Error: Request timed out. Try again, or use a shorter URL/article.');
+                return;
+            }
             alert(`Error: ${err.message}`);
         } finally {
             statusArea.classList.add('hidden');
