@@ -26,7 +26,7 @@ Schema:
   ]
 }`;
 
-async function extractInsights(text, title, url) {
+async function extractInsights(text, title, url, images = []) {
   const userPrompt = `Source title: ${title}
 Source URL: ${url}
 
@@ -42,6 +42,9 @@ Extract the 5–10 best insights. Return JSON only.`;
   parsed.insights = parsed.insights.filter((i) =>
     ["high", "medium"].includes(i.strength)
   );
+
+  // Pass through images for downstream use
+  parsed.images = images;
 
   console.log(
     `  ✓ Extracted ${parsed.insights.length} insights from "${title}"`

@@ -18,11 +18,11 @@ async function runPipeline(url, options = {}) {
     console.log(`\n🔗 Processing: ${url}`);
 
     // Stage 1: Fetch
-    const { text, title } = await fetchAndClean(url);
-    console.log(`  ✓ Fetched: ${title}`);
+    const { text, title, images } = await fetchAndClean(url);
+    console.log(`  ✓ Fetched: ${title} (${images?.length || 0} images found)`);
 
     // Stage 2: Extract
-    const extracted = await extractInsights(text, title, url);
+    const extracted = await extractInsights(text, title, url, images);
 
     // Stage 3: Transform
     const cards = await transformToCards(extracted);

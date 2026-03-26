@@ -190,6 +190,26 @@ button[type="submit"]:active {
     animation: fadeIn 0.5s ease backwards;
 }
 
+/* Card Image */
+.image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.insight-card:hover .card-image {
+    transform: scale(1.05);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

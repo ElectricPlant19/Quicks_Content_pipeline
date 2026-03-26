@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cards.forEach((card, index) => {
             const clone = template.content.cloneNode(true);
             const cardEl = clone.querySelector('.insight-card');
-            
+
             // Set staggered delay
             cardEl.style.animationDelay = `${index * 0.1}s`;
 
@@ -62,6 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
             clone.querySelector('.score').textContent = `${card.score}/10`;
             clone.querySelector('.hook').textContent = card.hook;
             clone.querySelector('.insight').textContent = card.insight;
+
+            // Handle image
+            if (card.image_url) {
+                const imgContainer = clone.querySelector('.image-container');
+                const img = clone.querySelector('.card-image');
+                img.src = card.image_url;
+                img.alt = card.hook;
+                imgContainer.classList.remove('hidden');
+            }
 
             if (card.twist) {
                 clone.querySelector('.twist-container').classList.remove('hidden');

@@ -7,15 +7,17 @@ Score each card on these dimensions (0–10 each):
 1. hook_strength     — Does it make you NEED to read more? Is it specific, not vague?
 2. insight_density   — How much value per word? Would a smart person learn something?
 3. twist_impact      — Does the twist reframe everything? (0 if no twist)
-4. shareability      — Would someone screenshot and send this? 
+4. shareability      — Would someone screenshot and send this?
 5. clarity           — Can a smart non-expert understand it in one read?
+6. visual_appeal     — Does the image enhance the card? (10 = highly relevant/striking, 5 = generic but okay, 0 = no image or irrelevant)
 
 Final score = weighted average:
-  hook_strength * 0.30
-+ insight_density * 0.30
+  hook_strength * 0.25
++ insight_density * 0.25
 + twist_impact * 0.15
 + shareability * 0.15
 + clarity * 0.10
++ visual_appeal * 0.10
 
 Also provide:
 - "verdict": "publish" (score ≥ 7.0) | "review" (5.0–6.9) | "reject" (< 5.0)
@@ -30,6 +32,7 @@ Schema per item:
   "twist_impact": 0-10,
   "shareability": 0-10,
   "clarity": 0-10,
+  "visual_appeal": 0-10,
   "final_score": 0-10 (computed, 2 decimal places),
   "verdict": "publish" | "review" | "reject",
   "weakness": "string or null"
@@ -43,7 +46,8 @@ async function scoreCards(cards) {
 Hook: ${c.hook}
 Insight: ${c.insight}
 Twist: ${c.twist || "(none)"}
-Category: ${c.category}`
+Category: ${c.category}
+Image: ${c.image_url || "(none)"}`
     )
     .join("\n\n---\n\n");
 
@@ -56,11 +60,12 @@ Category: ${c.category}`
   const scored = cards.map((card, i) => {
     const s = scores[i] || {};
     const computed =
-      (s.hook_strength || 0) * 0.3 +
-      (s.insight_density || 0) * 0.3 +
+      (s.hook_strength || 0) * 0.25 +
+      (s.insight_density || 0) * 0.25 +
       (s.twist_impact || 0) * 0.15 +
       (s.shareability || 0) * 0.15 +
-      (s.clarity || 0) * 0.1;
+      (s.clarity || 0) * 0.10 +
+      (s.visual_appeal || 0) * 0.10;
 
     return {
       ...card,
@@ -71,6 +76,7 @@ Category: ${c.category}`
         twist_impact: s.twist_impact,
         shareability: s.shareability,
         clarity: s.clarity,
+        visual_appeal: s.visual_appeal,
         verdict: s.verdict || (computed >= 7 ? "publish" : computed >= 5 ? "review" : "reject"),
         weakness: s.weakness || null,
       },

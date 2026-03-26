@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 
 const FactSchema = new mongoose.Schema({
-  hook:     { type: String, required: true, maxlength: 200 },
-  insight:  { type: String, required: true },
-  twist:    { type: String, default: null },
-  category: { type: String, required: true, enum: [
+  hook:       { type: String, required: true, maxlength: 200 },
+  insight:    { type: String, required: true },
+  twist:      { type: String, default: null },
+  image_url:  { type: String, default: null },
+  category:   { type: String, required: true, enum: [
     'Psychology', 'Economics', 'Science', 'History',
     'Decision-Making', 'Behavior', 'Technology', 'Philosophy'
   ]},
-  tags:     [{ type: String }],
-  score:    { type: Number, default: 0, min: 0, max: 10 },
+  tags:       [{ type: String }],
+  score:      { type: Number, default: 0, min: 0, max: 10 },
   scoring: {
     hook_strength:   Number,
     insight_density: Number,

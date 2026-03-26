@@ -4,6 +4,7 @@ const cheerio = require("cheerio");
 /**
  * Fetches a URL and extracts clean readable text from it.
  * Strips nav, footer, ads, scripts, and boilerplate.
+ * Also extracts relevant images from the article.
  */
 async function fetchAndClean(url) {
   const res = await axios.get(url, {
@@ -52,6 +53,49 @@ async function fetchAndClean(url) {
 
   const title = $("title").first().text().trim() || url;
 
+  // Extract images from the article
+  const images = [];
+  const seenUrls = new Set();
+
+  // Find images in main content area
+  for (const selector of candidates) {
+    const el = $(selector).first();
+    if (el.length) {
+      el.find("img").each((_, img) => {
+        const src = $(img).attr("src");
+        const alt = $(img).attr("alt") || "";
+        const dataSrc = $(img).attr("data-src");
+
+        // Prefer data-src (lazy loading) or src
+        const imgUrl = dataSrc || src;
+
+        if (!imgUrl || seenUrls.has(imgUrl)) return;
+
+        // Skip tiny images, icons, and data URIs
+        if (imgUrl.startsWith("data:")) return;
+        if (imgUrl.includes("icon") || imgUrl.includes("logo")) return;
+        if (imgUrl.length < 10) return;
+
+        // Convert relative URLs to absolute
+        let absoluteUrl;
+        try {
+          absoluteUrl = new URL(imgUrl, url).href;
+        } catch {
+          return;
+        }
+
+        seenUrls.add(absoluteUrl);
+        images.push({
+          url: absoluteUrl,
+          alt: alt.trim(),
+          width: parseInt($(img).attr("width") || "0", 10),
+          height: parseInt($(img).attr("height") || "0", 10),
+        });
+      });
+      if (images.length > 0) break;
+    }
+  }
+
   if (text.length < 200) {
     throw new Error(
       `Could not extract meaningful content from URL: ${url} (got ${text.length} chars)`
@@ -79,7 +123,7 @@ async function fetchAndClean(url) {
       `\n\n[Content truncated at ${cutoff + 1} characters. Original length: ${text.length}]`;
   }
 
-  return { url, title, text: truncated, charCount: text.length };
+  return { url, title, text: truncated, charCount: text.length, images };
 }
 
 module.exports = { fetchAndClean };
