@@ -6,13 +6,15 @@ const cheerio = require("cheerio");
  * Strips nav, footer, ads, scripts, and boilerplate.
  * Also extracts relevant images from the article.
  */
-async function fetchAndClean(url) {
+async function fetchAndClean(url, options = {}) {
+  const { signal } = options;
   const res = await axios.get(url, {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (compatible; QuicksPipeline/1.0; +https://quicks.app)",
     },
     timeout: 15000,
+    signal,
   });
 
   const $ = cheerio.load(res.data);

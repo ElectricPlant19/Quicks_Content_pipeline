@@ -29,7 +29,7 @@ Rules:
 - For image_url: pick the image that best illustrates or complements THIS specific insight
 - Return ONLY valid JSON array. No preamble, no fences.`;
 
-async function transformToCards(extractionResult) {
+async function transformToCards(extractionResult, options = {}) {
   const { source_title, source_url, insights, images } = extractionResult;
 
   const insightList = insights
@@ -49,7 +49,7 @@ ${imagesList}
 
 Transform each into a Quicks card. For each card, select the most relevant image from the list above (or use null if none fit). Return a JSON array of card objects.`;
 
-  const raw = await callLLM(SYSTEM, userPrompt, 3000);
+  const raw = await callLLM(SYSTEM, userPrompt, 3000, options);
   const cards = parseJSON(raw);
 
   // Attach metadata

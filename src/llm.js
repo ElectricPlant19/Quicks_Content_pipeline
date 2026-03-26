@@ -25,14 +25,17 @@ function releaseSemaphore() {
   }
 }
 
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1000;
-
 /**
  * Calls Groq (Llama 3.3 70B) with a system prompt and user prompt.
- * Includes retry logic with exponential backoff and rate-limit handling.
+ * No retries: fail fast so UI is not blocked.
  */
-async function callLLM(system, prompt, maxTokens = 1000) {
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    throw signal.reason || new Error("Operation aborted.");
+  }
+}
+
+async function callLLM(system, prompt, maxTokens = 1000, options = {}) {
   await acquireSemaphore();
 
   try {
@@ -42,52 +45,38 @@ async function callLLM(system, prompt, maxTokens = 1000) {
     }
 
     const requestTimeoutMs = Number(process.env.LLM_REQUEST_TIMEOUT_MS || 30000);
-    const maxRetries = Number(process.env.LLM_MAX_RETRIES || MAX_RETRIES);
+    const signal = options.signal;
+    throwIfAborted(signal);
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await axios.post("https://api.groq.com/openai/v1/chat/completions", {
-          model: "llama-3.1-8b-instant",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: maxTokens,
-          temperature: 0.1,
-        }, {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          timeout: requestTimeoutMs,
-        });
+    try {
+      const response = await axios.post("https://api.groq.com/openai/v1/chat/completions", {
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: maxTokens,
+        temperature: 0.1,
+      }, {
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        timeout: requestTimeoutMs,
+        signal,
+      });
 
-        return response.data.choices[0].message.content;
-      } catch (err) {
-        const status = err.response?.status;
-        const isRetryable = status === 429 || status >= 500;
-
-        if (!isRetryable || attempt === maxRetries) {
-          if (err.response) {
-            console.error(`  ❌ Groq API Details:`, JSON.stringify(err.response.data, null, 2));
-          }
-          const msg = err.response?.data?.error?.message || err.message;
-          console.error(`  ❌ Groq API error: ${msg}`);
-          throw new Error(`Groq API failed: ${msg}`);
-        }
-
-        // Compute delay: respect Retry-After header or use exponential backoff
-        let delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1);
-        if (status === 429 && err.response?.headers?.["retry-after"]) {
-          const retryAfter = parseInt(err.response.headers["retry-after"], 10);
-          if (!isNaN(retryAfter)) {
-            delayMs = retryAfter * 1000;
-          }
-        }
-
-        console.warn(`  ⚠ Groq API attempt ${attempt}/${maxRetries} failed (HTTP ${status}), retrying in ${delayMs}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return response.data.choices[0].message.content;
+    } catch (err) {
+      if (err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+        throw new Error("LLM request aborted.");
       }
+      if (err.response) {
+        console.error(`  ❌ Groq API Details:`, JSON.stringify(err.response.data, null, 2));
+      }
+      const msg = err.response?.data?.error?.message || err.message;
+      console.error(`  ❌ Groq API error: ${msg}`);
+      throw new Error(`Groq API failed: ${msg}`);
     }
   } finally {
     releaseSemaphore();

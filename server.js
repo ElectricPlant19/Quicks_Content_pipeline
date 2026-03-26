@@ -92,6 +92,13 @@ app.post("/api/process", async (req, res) => {
   }
 
   try {
+    const abortController = new AbortController();
+    let clientDisconnected = false;
+    req.on("aborted", () => {
+      clientDisconnected = true;
+      abortController.abort(new Error("Client disconnected"));
+    });
+
     // Input sanitization and SSRF protection
     const parsed = await validateUrl(url);
 
@@ -112,6 +119,7 @@ app.post("/api/process", async (req, res) => {
       runPipeline(url, {
         outputDir: path.join(__dirname, "output"),
         existingHooks,
+        signal: abortController.signal,
       }),
       new Promise((_, reject) =>
         setTimeout(
@@ -125,9 +133,13 @@ app.post("/api/process", async (req, res) => {
       return res.status(500).json(results);
     }
 
+    if (clientDisconnected || res.writableEnded) return;
     res.json(results);
   } catch (err) {
     console.error(`❌ Pipeline Error: ${err.message}`);
+    if (req.aborted || res.writableEnded || err.message.includes("Client disconnected")) {
+      return;
+    }
     const isBadRequest =
       err.message.includes("Malformed") ||
       err.message.includes("protocol") ||

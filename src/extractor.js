@@ -28,7 +28,7 @@ Schema:
   ]
 }`;
 
-async function extractInsights(text, title, url, images = []) {
+async function extractInsights(text, title, url, images = [], options = {}) {
   const userPrompt = `Source title: ${title}
 Source URL: ${url}
 
@@ -37,7 +37,7 @@ ${text}
 
 Extract the 5–10 best insights. Return JSON only.`;
 
-  const raw = await callLLM(SYSTEM, userPrompt, 2000);
+  const raw = await callLLM(SYSTEM, userPrompt, 2000, options);
   const parsed = parseJSON(raw);
 
   // Filter to only high/medium strength insights

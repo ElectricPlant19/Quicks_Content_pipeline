@@ -38,7 +38,7 @@ Schema per item:
   "weakness": "string or null"
 }`;
 
-async function scoreCards(cards) {
+async function scoreCards(cards, options = {}) {
   const cardList = cards
     .map(
       (c, i) =>
@@ -53,7 +53,7 @@ Image: ${c.image_url || "(none)"}`
 
   const userPrompt = `Score these ${cards.length} Quicks cards. Return JSON array only.\n\n${cardList}`;
 
-  const raw = await callLLM(SYSTEM, userPrompt, 2000);
+  const raw = await callLLM(SYSTEM, userPrompt, 2000, options);
   const scores = parseJSON(raw);
 
   // Merge scores back into cards
