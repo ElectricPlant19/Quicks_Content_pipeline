@@ -10,6 +10,8 @@
  * Options:
  *   --output <dir>    Output directory (default: ./output)
  *   --dry-run         Run pipeline but don't write files
+ *   --mode <legacy|merged>  Pipeline mode (default: legacy; merged = 2 LLM calls)
+ *                           Can also be set via PIPELINE_MODE env var
  */
 
 require("dotenv").config();
@@ -40,12 +42,19 @@ for (let i = 0; i < args.length; i++) {
     flags.output = args[++i];
   } else if (args[i] === "--dry-run") {
     flags.dryRun = true;
+  } else if (args[i] === "--mode") {
+    flags.mode = args[++i];
   } else if (args[i].startsWith("http")) {
     urls.push(args[i]);
   }
 }
 
 const OUTPUT_DIR = flags.output || "./output";
+
+// --mode flag overrides PIPELINE_MODE env var
+if (flags.mode) {
+  process.env.PIPELINE_MODE = flags.mode;
+}
 
 async function run() {
   if (!process.env.GROQ_API_KEY && !process.env.GROK_API_KEY) {
@@ -57,7 +66,8 @@ async function run() {
     console.log(
       "Usage: node pipeline.js <url> [url2] ...\n" +
       "       node pipeline.js --file urls.txt\n" +
-      "       node pipeline.js --output ./my-output --dry-run <url>"
+      "       node pipeline.js --output ./my-output --dry-run <url>\n" +
+      "       node pipeline.js --mode merged <url>   (2 LLM calls instead of 3)"
     );
     process.exit(0);
   }

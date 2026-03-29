@@ -50,7 +50,7 @@ async function callLLM(system, prompt, maxTokens = 1000, options = {}) {
 
     try {
       const response = await axios.post("https://api.groq.com/openai/v1/chat/completions", {
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: system },
           { role: "user", content: prompt },

@@ -4,11 +4,24 @@ const { transformToCards } = require("./transformer");
 const { scoreCards } = require("./scorer");
 const { deduplicateCards } = require("./deduplicator");
 const { writeOutputs, loadExistingHooks } = require("./output");
+const { mergedExtractAndTransform, PROMPT_VERSION } = require("./mergedExtractTransform");
+
+/**
+ * Pipeline modes:
+ *   legacy  (default) — 3 LLM calls: extract → transform → score
+ *   merged            — 2 LLM calls: extract+transform (merged) → score
+ *
+ * Set via env: PIPELINE_MODE=merged
+ *
+ * The merged path uses prompt version logged as PROMPT_VERSION from
+ * mergedExtractTransform.js for debugging reproducibility.
+ */
+const PIPELINE_MODE = (process.env.PIPELINE_MODE || "legacy").toLowerCase();
 
 async function runPipeline(url, options = {}) {
-  const { 
-    outputDir = "./output", 
-    dryRun = false, 
+  const {
+    outputDir = "./output",
+    dryRun = false,
     existingHooks = [],
     signal,
   } = options;
@@ -21,7 +34,7 @@ async function runPipeline(url, options = {}) {
   };
 
   try {
-    console.log(`\n🔗 Processing: ${url}`);
+    console.log(`\n🔗 Processing: ${url} [mode=${PIPELINE_MODE}]`);
     throwIfAborted();
 
     // Stage 1: Fetch
@@ -29,15 +42,28 @@ async function runPipeline(url, options = {}) {
     console.log(`  ✓ Fetched: ${title} (${images?.length || 0} images found)`);
     throwIfAborted();
 
-    // Stage 2: Extract
-    const extracted = await extractInsights(text, title, url, images, { signal });
-    throwIfAborted();
+    let cards;
 
-    // Stage 3: Transform
-    const cards = await transformToCards(extracted, { signal });
-    throwIfAborted();
+    if (PIPELINE_MODE === "merged") {
+      // ── Merged path: 2 LLM calls total ──────────────────────────────────
+      console.log(`  [prompt=${PROMPT_VERSION}]`);
 
-    // Stage 4: Score
+      // Call 1: extract + transform in one shot
+      cards = await mergedExtractAndTransform(text, title, url, images, { signal });
+      throwIfAborted();
+    } else {
+      // ── Legacy path: 3 LLM calls total ──────────────────────────────────
+
+      // Stage 2: Extract
+      const extracted = await extractInsights(text, title, url, images, { signal });
+      throwIfAborted();
+
+      // Stage 3: Transform
+      cards = await transformToCards(extracted, { signal });
+      throwIfAborted();
+    }
+
+    // Stage 4: Score (both paths)
     const scored = await scoreCards(cards, { signal });
     throwIfAborted();
 
@@ -46,7 +72,6 @@ async function runPipeline(url, options = {}) {
 
     const durationMs = Date.now() - startTime;
 
-    // Status updates for return
     const results = {
       title,
       url,
