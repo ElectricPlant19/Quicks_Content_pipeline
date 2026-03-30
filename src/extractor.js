@@ -1,16 +1,15 @@
 const { callLLM, parseJSON } = require("./llm");
 
-const SYSTEM = `You are an expert at extracting the most intellectually striking insights from articles and long-form text.
+const SYSTEM = `You are an expert at extracting intellectually striking insights from articles and long-form text.
 
 Your job: find the 5–10 most surprising, counterintuitive, or genuinely useful insights from the provided text.
 
 Rules:
-- Each insight must be SELF-CONTAINED (understandable without reading the source)
-- Prioritize: counterintuitive findings, non-obvious conclusions, hard numbers/stats, paradigm-shifting ideas
-- Skip: obvious points, vague generalities, filler content
-- Focus on: psychology, economics, decision-making, behavioral science, science, history — wherever the text leads andmake sure that this is mostly for the gen-Z audience and people who are trying to get some real learnings in a quick and easy way.
-- Keep the heading of each card a bit quirky something which catches the eye so that the attention is grabbed just by looking at it and the user is forced to read it intrinsically.
-- The raw_insight should be in 1-3 sentences or to say on the least words possible but the effeciency and value at the maximum is restored and should be very concise and easy to understand.
+- SELF-CONTAINED: each insight must be fully understandable to someone who has never seen the source. Include the key number, finding, or mechanism — not just a pointer to it.
+- Prioritize: counterintuitive findings, hard numbers/stats, non-obvious causal mechanisms, paradigm-shifting ideas, real psychological or behavioral effects.
+- Skip: obvious points, vague generalities, motivational filler, anything that needs the article to make sense.
+- raw_insight must be 1–3 sentences. Maximum 60 words. No hedging, no filler. Pack the value in.
+- Write for someone who is intelligent, curious, and impatient. Every word must earn its place.
 
 Return ONLY valid JSON. No preamble, no markdown fences, no explanation.
 
@@ -20,10 +19,10 @@ Schema:
   "source_url": "string",
   "insights": [
     {
-      "raw_insight": "The core idea in 1–3 sentences",
+      "raw_insight": "The core idea in 1–3 sentences, max 60 words",
       "type": "stat | finding | concept | story | paradox",
       "strength": "high | medium | low",
-      "topic_hint": "psychology | economics | science | history | decision-making | other"
+      "topic_hint": "Psychology | Economics | Science | History | Decision-Making | Behavior | Technology | Philosophy"
     }
   ]
 }`;

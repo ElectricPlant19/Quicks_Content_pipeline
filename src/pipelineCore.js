@@ -5,6 +5,7 @@ const { scoreCards } = require("./scorer");
 const { deduplicateCards } = require("./deduplicator");
 const { writeOutputs, loadExistingHooks } = require("./output");
 const { mergedExtractAndTransform, PROMPT_VERSION } = require("./mergedExtractTransform");
+const { enrichCardsWithImages } = require("./imageEnricher");
 
 /**
  * Pipeline modes:
@@ -63,6 +64,21 @@ async function runPipeline(url, options = {}) {
       throwIfAborted();
     }
 
+    // Stage 3.5: Image enrichment — fills missing image_url via open-license APIs
+    let enrichStats = {};
+    try {
+      const enrichResult = await enrichCardsWithImages(
+        cards,
+        { sourceUrl: url, sourceTitle: title, articleImages: images },
+        { signal }
+      );
+      cards = enrichResult.cards;
+      enrichStats = enrichResult.stats;
+    } catch (enrichErr) {
+      console.warn(`  ⚠ Image enrichment stage failed: ${enrichErr.message}`);
+    }
+    throwIfAborted();
+
     // Stage 4: Score (both paths)
     const scored = await scoreCards(cards, { signal });
     throwIfAborted();
@@ -86,6 +102,7 @@ async function runPipeline(url, options = {}) {
         await writeOutputs(unique, {
           urls: [url],
           durationMs,
+          enrichment: enrichStats,
         }, outputDir);
       } catch (persistErr) {
         console.error(`  ⚠ Persistence error for ${url}: ${persistErr.message}`);

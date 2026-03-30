@@ -4,7 +4,15 @@ const FactSchema = new mongoose.Schema({
   hook:       { type: String, required: true, maxlength: 200 },
   insight:    { type: String, required: true },
   twist:      { type: String, default: null },
-  image_url:  { type: String, default: null },
+  image_url:                  { type: String,  default: null },
+  image_source_provider:      { type: String,  default: null },
+  image_source_page:          { type: String,  default: null },
+  image_license:              { type: String,  default: null },
+  image_author:               { type: String,  default: null },
+  image_attribution_required: { type: Boolean, default: false },
+  image_confidence:           { type: Number,  default: null },
+  image_storage_key:          { type: String,  default: null }, // reserved for CDN
+  image_cdn_url:              { type: String,  default: null }, // reserved for CDN
   category:   { type: String, required: true, enum: [
     'Psychology', 'Economics', 'Science', 'History',
     'Decision-Making', 'Behavior', 'Technology', 'Philosophy'

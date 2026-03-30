@@ -24,7 +24,7 @@ STEP 2 — Format each selected insight as a Quicks card:
 - twist: 1 sentence. The unexpected implication, the irony, the so-what. Keep it light and a bit humorous, relatable so users will remember it.
 - category: MUST be exactly one of: Psychology | Economics | Science | History | Decision-Making | Behavior | Technology | Philosophy
 - tags: array of exactly 2–4 lowercase keywords
-- image_url: URL from the article images list that best illustrates THIS specific card, or null if none fit. Choose: visually striking, conceptually relevant images. Prefer diagrams, charts, photos.
+- image_url: URL from the article images list that best illustrates THIS specific card. If no article image clearly fits, return null — a fallback stage will find a better image. Choose: visually striking, conceptually relevant images. Prefer diagrams, charts, photos over generic stock images.
 
 Writing rules:
 - Avoid the words: "fascinating", "surprising", "interesting", "did you know"
