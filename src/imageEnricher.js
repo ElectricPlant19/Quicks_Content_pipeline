@@ -1,4 +1,3 @@
-const openverse = require("./imageProviders/openverse");
 const pexels = require("./imageProviders/pexels");
 
 const BLOCKED_URL_PATTERNS = [
@@ -21,16 +20,11 @@ const CONFIG = {
   get maxCandidates() { return parseInt(process.env.IMAGE_ENRICH_MAX_CANDIDATES || "20", 10); },
   get minShortEdge()  { return parseInt(process.env.IMAGE_MIN_SHORT_EDGE || "400", 10); },
   get minArea()       { return parseInt(process.env.IMAGE_MIN_AREA || "250000", 10); },
-  get allowedLicenses() {
-    return (process.env.IMAGE_ALLOWED_LICENSES || "CC0,CC-BY,CC-BY-SA")
-      .split(",").map(l => l.trim());
-  },
   get preferAspect()  { return (process.env.IMAGE_PREFER_ASPECT || "portrait").toLowerCase(); },
 };
 
 const PROVIDERS = [
-  { module: openverse, priority: 1.0, name: "openverse" },
-  { module: pexels,    priority: 0.8, name: "pexels" },
+  { module: pexels, priority: 1.0, name: "pexels" },
 ];
 
 /**
@@ -48,7 +42,6 @@ async function enrichCardsWithImages(cards, context = {}, options = {}) {
     cards_filled_by_enricher: 0,
     fill_rate: 0,
     provider_hit_distribution: {},
-    license_reject_count: 0,
   };
 
   if (!CONFIG.enabled) {
@@ -69,13 +62,11 @@ async function enrichCardsWithImages(cards, context = {}, options = {}) {
         const { candidates, providerCounts } = await fetchCandidates(query, { signal });
         const { kept, filterLog } = filterCandidates(candidates);
 
-        stats.license_reject_count += filterLog.license;
-
         console.log(
           `  [enrich] "${String(card.hook || "").slice(0, 45)}"` +
           ` query="${query}"` +
           ` fetched=${Object.entries(providerCounts).map(([k,v]) => `${k}:${v}`).join(" ")}` +
-          ` blocked=${filterLog.blocked} license=${filterLog.license} dim=${filterLog.dimension}` +
+          ` blocked=${filterLog.blocked} dim=${filterLog.dimension}` +
           ` final=${kept.length}`
         );
 
@@ -114,8 +105,7 @@ async function enrichCardsWithImages(cards, context = {}, options = {}) {
   const missing = stats.cards_missing_image_before;
   console.log(
     `  ✓ Image enrichment: ${filled}/${missing} filled ` +
-    `(${(stats.fill_rate * 100).toFixed(0)}% fill rate, ` +
-    `${stats.license_reject_count} license rejects)`
+    `(${(stats.fill_rate * 100).toFixed(0)}% fill rate)`
   );
 
   return { cards: enriched, stats };
@@ -166,7 +156,6 @@ async function fetchCandidates(query, opts) {
       module.searchImages(query, {
         ...opts,
         maxCandidates: CONFIG.maxCandidates,
-        allowedLicenses: CONFIG.allowedLicenses,
       }).then(images => images.map(img => ({ ...img, _providerPriority: priority, provider: img.provider || name })))
     )
   );
@@ -189,7 +178,7 @@ async function fetchCandidates(query, opts) {
 }
 
 function filterCandidates(candidates) {
-  const filterLog = { blocked: 0, license: 0, dimension: 0 };
+  const filterLog = { blocked: 0, dimension: 0 };
   const kept = [];
 
   for (const img of candidates) {
@@ -198,11 +187,6 @@ function filterCandidates(candidates) {
 
     if (BLOCKED_URL_PATTERNS.some(p => urlLower.includes(p) || titleLower.includes(p))) {
       filterLog.blocked++;
-      continue;
-    }
-
-    if (img.provider !== "pexels" && !CONFIG.allowedLicenses.includes(img.license)) {
-      filterLog.license++;
       continue;
     }
 

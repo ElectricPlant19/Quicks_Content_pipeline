@@ -39,12 +39,11 @@ Copy `.env.example` to `.env` and fill in:
 - `PIPELINE_TIMEOUT_MS` — Max pipeline duration (default 90000)
 - `LLM_REQUEST_TIMEOUT_MS` — Per-LLM-call timeout (default 30000)
 - `IMAGE_ENRICH_ENABLED` — `true` (default) or `false` to skip enrichment stage
-- `IMAGE_ENRICH_MAX_CANDIDATES` — Images fetched per provider (default 20)
+- `IMAGE_ENRICH_MAX_CANDIDATES` — Images fetched from Pexels (default 20)
 - `IMAGE_MIN_SHORT_EDGE` — Min pixels on the short edge (default 400)
 - `IMAGE_MIN_AREA` — Min total pixel area (default 250000)
-- `IMAGE_ALLOWED_LICENSES` — Comma-separated list (default `CC0,CC-BY,CC-BY-SA`)
 - `IMAGE_PREFER_ASPECT` — `portrait` (default) or `any`
-- `PEXELS_API_KEY` — Pexels API key (optional; enricher skips Pexels if absent)
+- `PEXELS_API_KEY` — Pexels API key (required for enrichment; enricher skips entirely if absent)
 
 ## Architecture
 
@@ -88,21 +87,21 @@ image_storage_key (reserved), image_cdn_url (reserved)
 ```
 
 ### Image enricher (`src/imageEnricher.js`)
-Fills missing `image_url` fields after transform using open-license image APIs.
+Fills missing `image_url` fields after transform using the Pexels API.
 
-**Providers** (`src/imageProviders/`):
-- `openverse.js` — Openverse API, no key required, strong CC license metadata
-- `pexels.js` — Pexels API (`PEXELS_API_KEY`), requests portrait orientation natively, free commercial use
+**Provider** (`src/imageProviders/pexels.js`):
+- Pexels API (`PEXELS_API_KEY`), all photos free to use, requests portrait orientation natively
+- Rate limited: 180 req/hr cap (10% buffer below Pexels free-tier limit of 200/hr) with 350ms minimum gap between requests
 
 **Query building:** hook nouns (stop-word filtered, len ≥ 4) + top 2 tags + category. Falls back to category + source title nouns if empty.
 
-**Filtering:** blocked domains (Getty, Shutterstock, etc.), license allowlist, `minShortEdge` + `minArea` (not separate width/height — avoids killing valid portrait images).
+**Filtering:** blocked domains (Getty, Shutterstock, etc.), `minShortEdge` + `minArea` (not separate width/height — avoids killing valid portrait images).
 
 **Ranking (5 factors):** text relevance 40% · tag/category overlap 20% · aspect ratio 20% (portrait h/w ≥ 1.2 scores 1.0, landscape 0.2) · resolution 10% · provider priority 10%.
 
 **Debug log per card:**
 ```
-[enrich] "hook..." query="..." fetched=openverse:12 pexels:8 blocked=0 license=2 dim=3 final=15
+[enrich] "hook..." query="..." fetched=pexels:20 blocked=0 dim=3 final=17
 ```
 
 ### Two frontends
